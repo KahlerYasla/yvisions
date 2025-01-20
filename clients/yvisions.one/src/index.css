@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    font-size: 13.5px;
+}
+
+body {
+    color: rgba(0, 0, 0, 0.6);
+    margin: 0;
+    font-family: "JetBrainsMono", -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
+        "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+        monospace;
+}
+
+/* JetBrainsMono -----------------------------------------------------------------------------------------------*/
+@font-face {
+    font-family: "JetBrainsMono";
+    src: url("../public/fonts/JetBrainsMono/JetBrainsMono-Regular.ttf");
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "JetBrainsMono";
+    src: url("../public/fonts/JetBrainsMono/JetBrainsMono-Bold.ttf");
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "JetBrainsMono";
+    src: url("../public/fonts/JetBrainsMono/JetBrainsMono-Italic.ttf");
+    font-style: italic;
+    font-weight: normal;
+}
+
+@font-face {
+    font-family: "JetBrainsMono";
+    src: url("../public/fonts/JetBrainsMono/JetBrainsMono-BoldItalic.ttf");
+    font-weight: bold;
+    font-style: italic;
+}
