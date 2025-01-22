@@ -594,3 +594,165 @@ BEGIN
 END;
 $function$
 --
+
+CREATE OR REPLACE FUNCTION get_objectives_overview()
+RETURNS TABLE (
+    objective_id UUID,
+    title TEXT,
+    description TEXT,
+    status TEXT,
+    progress_percentage NUMERIC,
+    start_date DATE,
+    deadline DATE
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        id AS objective_id,
+        title,
+        description,
+        status,
+        progress_percentage::NUMERIC,
+        start_date,
+        deadline
+    FROM objectives
+    ORDER BY start_date;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION get_key_results_overview()
+RETURNS TABLE (
+    result_id UUID,
+    objective_id UUID,
+    title TEXT,
+    progress_percentage NUMERIC,
+    status TEXT,
+    target_value NUMERIC,
+    current_value NUMERIC,
+    deadline DATE
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        id AS result_id,
+        objective_id,
+        title,
+        progress_percentage::NUMERIC,
+        status,
+        target_value,
+        current_value,
+        deadline
+    FROM results
+    ORDER BY objective_id, progress_percentage DESC;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+CREATE OR REPLACE FUNCTION get_completion_trends()
+RETURNS TABLE (
+    period DATE,
+    objectives_completed INT,
+    key_results_completed INT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        DATE_TRUNC('month', deadline) AS period,
+        COUNT(DISTINCT CASE WHEN status = 'done' THEN id END) AS objectives_completed,
+        COUNT(DISTINCT CASE WHEN status = 'completed' THEN id END) AS key_results_completed
+    FROM (
+        SELECT id, status, deadline FROM objectives
+        UNION ALL
+        SELECT id, status, deadline FROM results
+    ) AS combined
+    GROUP BY period
+    ORDER BY period;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+CREATE OR REPLACE FUNCTION get_objectives_per_user()
+RETURNS TABLE (
+    user_id UUID,
+    username TEXT,
+    objective_id UUID,
+    objective_title TEXT,
+    status TEXT,
+    progress_percentage NUMERIC
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        u.id AS user_id,
+        u.username,
+        o.id AS objective_id,
+        o.title AS objective_title,
+        o.status,
+        o.progress_percentage::NUMERIC
+    FROM objectives o
+    JOIN objective_assignees oa ON o.id = oa.objective_id
+    JOIN users u ON oa.user_id = u.id
+    ORDER BY u.username, o.title;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+CREATE OR REPLACE FUNCTION get_key_results_by_assignee()
+RETURNS TABLE (
+    user_id UUID,
+    username TEXT,
+    result_id UUID,
+    result_title TEXT,
+    objective_id UUID,
+    progress_percentage NUMERIC,
+    status TEXT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        u.id AS user_id,
+        u.username,
+        r.id AS result_id,
+        r.title AS result_title,
+        r.objective_id,
+        r.progress_percentage::NUMERIC,
+        r.status
+    FROM results r
+    JOIN users u ON r.owner_id = u.id
+    ORDER BY u.username, r.title;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+CREATE OR REPLACE FUNCTION get_assignee_contributions()
+RETURNS TABLE (
+    user_id UUID,
+    username TEXT,
+    objectives_contributed INT,
+    key_results_contributed INT,
+    total_progress NUMERIC
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        u.id AS user_id,
+        u.username,
+        COUNT(DISTINCT oa.objective_id) AS objectives_contributed,
+        COUNT(DISTINCT r.id) AS key_results_contributed,
+        SUM(r.progress_percentage) AS total_progress
+    FROM users u
+    LEFT JOIN objective_assignees oa ON u.id = oa.user_id
+    LEFT JOIN objectives o ON oa.objective_id = o.id
+    LEFT JOIN results r ON r.owner_id = u.id
+    GROUP BY u.id, u.username
+    ORDER BY total_progress DESC;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
